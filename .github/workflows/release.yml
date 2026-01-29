@@ -1,0 +1,90 @@
+name: Release MQTT Module
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Get Version from Tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      
+      - name: Create Module ZIP
+        run: |
+          # Erstelle temporären Build-Ordner
+          mkdir -p build/mqtt-module
+          
+          # Kopiere Modul-Dateien
+          cp -r lib build/mqtt-module/
+          cp -r lang build/mqtt-module/
+          cp -r conf build/mqtt-module/
+          cp -r www build/mqtt-module/
+          cp install.sh build/mqtt-module/ 2>/dev/null || true
+          cp README.md build/mqtt-module/
+          cp LICENSE build/mqtt-module/
+          cp VERSION build/mqtt-module/
+          
+          # Erstelle ZIP
+          cd build
+          zip -r mqtt-module.zip mqtt-module/
+          mv mqtt-module.zip ../
+          
+          # Info
+          echo "📦 ZIP erstellt:"
+          ls -lh ../mqtt-module.zip
+      
+      - name: Generate Checksums
+        run: |
+          sha256sum mqtt-module.zip > mqtt-module.zip.sha256
+          cat mqtt-module.zip.sha256
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            mqtt-module.zip
+            mqtt-module.zip.sha256
+          body: |
+            ## 🚀 MQTT Module ${{ steps.get_version.outputs.VERSION }}
+            
+            ### 📦 Installation
+            
+            **Automatisch:**
+            ```bash
+            curl -L https://github.com/DirkGoetze/disk2iso-mqtt/releases/download/${{ steps.get_version.outputs.VERSION }}/mqtt-module.zip -o /tmp/mqtt.zip
+            cd /opt/disk2iso
+            sudo unzip /tmp/mqtt.zip
+            sudo systemctl restart disk2iso-web
+            ```
+            
+            **Manuell:**
+            1. Download `mqtt-module.zip`
+            2. Entpacke nach `/opt/disk2iso/`
+            3. Restart Service: `sudo systemctl restart disk2iso-web`
+            
+            ### 📋 Voraussetzungen
+            
+            - disk2iso >= v1.2.0
+            - mosquitto-clients
+            
+            ### 🔍 Checksum Verification
+            
+            ```bash
+            sha256sum -c mqtt-module.zip.sha256
+            ```
+            
+            ### 📖 Dokumentation
+            
+            - [README](https://github.com/DirkGoetze/disk2iso-mqtt/blob/main/README.md)
+            - [CHANGELOG](https://github.com/DirkGoetze/disk2iso-mqtt/blob/main/CHANGELOG.md)
+            - [disk2iso Handbuch](https://github.com/DirkGoetze/disk2iso/blob/master/doc/Handbuch.md)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
