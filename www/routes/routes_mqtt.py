@@ -99,15 +99,15 @@ def api_mqtt_widget():
     )
 
 
-@mqtt_bp.route('/api/mqtt/config')
-def api_mqtt_config():
+@mqtt_bp.route('/api/widgets/mqtt/settings')
+def api_mqtt_settings_widget():
     """
-    Rendert das MQTT Configuration Widget
+    Rendert das MQTT Settings Widget
     Formular für MQTT-Einstellungen
     """
     config = get_config()
     
-    return render_template('widgets/mqtt_config_widget.html',
+    return render_template('widgets/mqtt_widget_settings.html',
         config=config,
         t=g.t  # Translations
     )

@@ -1,6 +1,6 @@
 /**
- * disk2iso - MQTT Config Widget
- * Dynamisches Laden und Verwalten der MQTT-Konfiguration
+ * disk2iso - MQTT Widget Settings
+ * Dynamisches Laden und Verwalten der MQTT-Einstellungen
  * Auto-Save bei Fokus-Verlust (moderne UX)
  */
 
@@ -11,30 +11,30 @@
     let saveIndicator = null;
 
     /**
-     * Lädt das MQTT Config Widget vom Backend
+     * Lädt das MQTT Settings Widget vom Backend
      */
-    async function loadMqttConfigWidget() {
+    async function loadMqttSettingsWidget() {
         try {
-            const response = await fetch('/api/mqtt/config');
-            if (!response.ok) throw new Error('Failed to load MQTT config widget');
+            const response = await fetch('/api/widgets/mqtt/settings');
+            if (!response.ok) throw new Error('Failed to load MQTT settings widget');
             return await response.text();
         } catch (error) {
-            console.error('Error loading MQTT config widget:', error);
-            return `<div class="error">Fehler beim Laden der MQTT-Konfiguration: ${error.message}</div>`;
+            console.error('Error loading MQTT settings widget:', error);
+            return `<div class="error">Fehler beim Laden der MQTT-Einstellungen: ${error.message}</div>`;
         }
     }
 
     /**
-     * Injiziert das MQTT Config Widget in die Config-Seite
+     * Injiziert das MQTT Settings Widget in die Config-Seite
      */
-    async function injectMqttConfigWidget() {
-        const targetContainer = document.querySelector('#mqtt-config-container');
+    async function injectMqttSettingsWidget() {
+        const targetContainer = document.querySelector('#mqtt-settings-container');
         if (!targetContainer) {
-            console.warn('MQTT config container not found');
+            console.warn('MQTT settings container not found');
             return;
         }
 
-        const widgetHtml = await loadMqttConfigWidget();
+        const widgetHtml = await loadMqttSettingsWidget();
         targetContainer.innerHTML = widgetHtml;
         
         // Save-Indicator erstellen
@@ -318,14 +318,11 @@
         };
     }
 
-    /**
-     * Exportiert Funktionen für externen Zugriff
-     */
-    window.mqttConfig = {
-        init: injectMqttConfigWidget,
-        collectConfig: collectMqttConfig,
-        testConnection: window.testMqttConnection,
-        save: autoSaveMqttConfig
-    };
+    // Auto-Injection beim Laden der Settings-Seite
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', injectMqttSettingsWidget);
+    } else {
+        injectMqttSettingsWidget();
+    }
 
 })();
