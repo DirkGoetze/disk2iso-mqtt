@@ -158,7 +158,7 @@ _mqtt_get_defaults() {
 # Rückgabe.: 0 = Erfolgreich geladen
 # Setzt....: MQTT_BROKER, MQTT_PORT, MQTT_USER, MQTT_PASSWORD,
 # .........  MQTT_TOPIC_PREFIX, MQTT_CLIENT_ID, MQTT_QOS, MQTT_RETAIN
-# Nutzt....: get_ini_value() aus libconfig.sh
+# Nutzt....: config_get_value_ini() aus libconfig.sh
 # Hinweis..: Wird von mqtt_check_dependencies() aufgerufen
 # .........  MQTT_ENABLED wird aus disk2iso.conf gelesen (bleibt unverändert)
 # ===========================================================================
@@ -166,34 +166,27 @@ load_mqtt_config() {
     #-- Lokale Variablen ----------------------------------------------------
     local broker port user password topic_prefix client_id qos retain
 
-    #-- Ermittle Pfad zur Modul INI -----------------------------------------
-    local ini_file=$(get_module_ini_path "mqtt")
-    
-    #-- Lese MQTT-Konfiguration aus INI (falls existiert) -------------------
-    if [[ -f "$ini_file" ]]; then
-        broker=$(get_ini_value "$ini_file" "api" "broker")
-        port=$(get_ini_value "$ini_file" "api" "port")
-        user=$(get_ini_value "$ini_file" "api" "user")
-        password=$(get_ini_value "$ini_file" "api" "password")
-        topic_prefix=$(get_ini_value "$ini_file" "api" "topic_prefix")
-        client_id=$(get_ini_value "$ini_file" "api" "client_id")
-        qos=$(get_ini_value "$ini_file" "api" "qos")
-        retain=$(get_ini_value "$ini_file" "api" "retain")
-    else
-        log_warning "$MSG_MQTT_INI_NOT_FOUND: $ini_file"
-    fi
+    #-- Lese MQTT-Konfiguration aus INI (mit Defaults) ----------------------
+    broker=$(config_get_value_ini "mqtt" "api" "broker" "$(_mqtt_get_defaults broker)")
+    port=$(config_get_value_ini "mqtt" "api" "port" "$(_mqtt_get_defaults port)")
+    user=$(config_get_value_ini "mqtt" "api" "user" "$(_mqtt_get_defaults user)")
+    password=$(config_get_value_ini "mqtt" "api" "password" "$(_mqtt_get_defaults password)")
+    topic_prefix=$(config_get_value_ini "mqtt" "api" "topic_prefix" "$(_mqtt_get_defaults topic_prefix)")
+    client_id=$(config_get_value_ini "mqtt" "api" "client_id" "$(_mqtt_get_defaults client_id)")
+    qos=$(config_get_value_ini "mqtt" "api" "qos" "$(_mqtt_get_defaults qos)")
+    retain=$(config_get_value_ini "mqtt" "api" "retain" "$(_mqtt_get_defaults retain)")
     
     #-- Setze Variablen mit Defaults (INI-Werte überschreiben Defaults) -----
     #-- Prüfe zuerst ob Wert bereits aus disk2iso.conf gesetzt wurde --------
     #-- Nutzt _mqtt_get_defaults() für konsistente Defaults -----------------
-    MQTT_BROKER="${MQTT_BROKER:-${broker:-$(_mqtt_get_defaults broker)}}"
-    MQTT_PORT="${MQTT_PORT:-${port:-$(_mqtt_get_defaults port)}}"
-    MQTT_USER="${MQTT_USER:-${user:-$(_mqtt_get_defaults user)}}"
-    MQTT_PASSWORD="${MQTT_PASSWORD:-${password:-$(_mqtt_get_defaults password)}}"
-    MQTT_TOPIC_PREFIX="${MQTT_TOPIC_PREFIX:-${topic_prefix:-$(_mqtt_get_defaults topic_prefix)}}"
-    MQTT_CLIENT_ID="${MQTT_CLIENT_ID:-${client_id:-$(_mqtt_get_defaults client_id)}}"
-    MQTT_QOS="${MQTT_QOS:-${qos:-$(_mqtt_get_defaults qos)}}"
-    MQTT_RETAIN="${MQTT_RETAIN:-${retain:-$(_mqtt_get_defaults retain)}}"
+    MQTT_BROKER="${MQTT_BROKER:-${broker}}"
+    MQTT_PORT="${MQTT_PORT:-${port}}"
+    MQTT_USER="${MQTT_USER:-${user}}"
+    MQTT_PASSWORD="${MQTT_PASSWORD:-${password}}"
+    MQTT_TOPIC_PREFIX="${MQTT_TOPIC_PREFIX:-${topic_prefix}}"
+    MQTT_CLIENT_ID="${MQTT_CLIENT_ID:-${client_id}}"
+    MQTT_QOS="${MQTT_QOS:-${qos}}"
+    MQTT_RETAIN="${MQTT_RETAIN:-${retain}}"
     
     #-- Setze Initialisierungs-Flag -----------------------------------------
     INITIALIZED_MQTT=true
@@ -635,18 +628,11 @@ mqtt_export_config_json() {
         done < "$config_file"
     fi
     
-    #-- Lese erweiterte Werte aus libmqtt.ini (nutzt get_ini_value) --------
-    if [[ -f "$ini_file" ]]; then
-        local ini_topic_prefix=$(get_ini_value "$ini_file" "api" "topic_prefix")
-        local ini_client_id=$(get_ini_value "$ini_file" "api" "client_id")
-        local ini_qos=$(get_ini_value "$ini_file" "api" "qos")
-        local ini_retain=$(get_ini_value "$ini_file" "api" "retain")
-        
-        [[ -n "$ini_topic_prefix" ]] && topic_prefix="$ini_topic_prefix"
-        [[ -n "$ini_client_id" ]] && client_id="$ini_client_id"
-        [[ -n "$ini_qos" ]] && qos="$ini_qos"
-        [[ -n "$ini_retain" ]] && retain="$ini_retain"
-    fi
+    #-- Lese erweiterte Werte aus libmqtt.ini (nutzt config_get_value_ini) -
+    topic_prefix=$(config_get_value_ini "mqtt" "api" "topic_prefix" "$topic_prefix")
+    client_id=$(config_get_value_ini "mqtt" "api" "client_id" "$client_id")
+    qos=$(config_get_value_ini "mqtt" "api" "qos" "$qos")
+    retain=$(config_get_value_ini "mqtt" "api" "retain" "$retain")
     
     #-- Baue JSON-Output ----------------------------------------------------
     cat <<EOF
