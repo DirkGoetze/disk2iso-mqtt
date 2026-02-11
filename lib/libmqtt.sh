@@ -49,7 +49,7 @@ mqtt_check_dependencies() {
     log_debug "$MSG_DEBUG_MQTT_CHECK_START"
 
     #-- Alle Modul Abhängigkeiten prüfen -------------------------------------
-    check_module_dependencies "$MODULE_NAME_MQTT" || return 1
+    integrity_check_module_dependencies "$MODULE_NAME_MQTT" || return 1
 
     #-- Lade MQTT-Konfiguration aus INI -------------------------------------
     load_mqtt_config || return 1
@@ -108,7 +108,7 @@ is_mqtt_ready() {
 # .........  abhängigen Modulen
 # Parameter: keine
 # Rückgabe.: Vollständiger Pfad zum Modul Verzeichnis
-# Hinweis: Ordner wird bereits in check_module_dependencies() erstellt
+# Hinweis: Ordner wird bereits in integrity_check_module_dependencies() erstellt
 # ===========================================================================
 get_path_mqtt() {
     #-- Bestimme Ausgabeordner des Moduls -----------------------------------
